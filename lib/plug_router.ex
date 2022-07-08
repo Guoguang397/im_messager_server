@@ -94,6 +94,19 @@ defmodule PlugRouter do
     }))
   end
 
+  get "/observer" do
+    case :observer.start() do
+      :ok -> send_resp(conn, 200, Jason.encode!(%{
+        code: 200,
+        msg: "ok."
+      }))
+      {:error, _} -> send_resp(conn, 400, Jason.encode!(%{
+        code: 400,
+        msg: "Observer already started."
+      }))
+    end
+  end
+
   match _ do
     send_resp(conn, 404, Jason.encode!(%{
       code: 404,
