@@ -22,6 +22,11 @@ defmodule ImHomework.Application do
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ImHomework.Supervisor]
     Supervisor.start_link(children, opts)
+    dynamic_options = [
+      name: ChatroomEntity.Supervisor,
+      strategy: :one_for_one
+    ]
+    DynamicSupervisor.start_link(dynamic_options)
   end
 
   defp dispatch do

@@ -66,10 +66,7 @@ defmodule WebsocketHandler do
   end
 
   def terminate(_reason, _req, state) do
-    case is_integer(state.chatroom_id) do
-      true -> ClientManager.user_leave(state.chatroom_id, state.pid)
-      false -> ClientManager.user_leave(state.pid)
-    end
+    ClientManager.user_leave(state.chatroom_id, state.pid)
     :ok
   end
 end

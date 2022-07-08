@@ -5,31 +5,27 @@ defmodule ClientManager do
 
   def handle_call({:user_enter, chatroom_id, pid}, _from, state) do
     case Map.has_key?(state, chatroom_id) do
-      true -> {:reply, :ok, Map.put(state, chatroom_id, state[chatroom_id] ++ [pid])}
-      false -> {:reply, :ok, Map.put(state, chatroom_id, [pid])}
+      true -> {:reply, GenServer.call(state[chatroom_id], {:user_enter, pid}), state}
+      false ->
+        {:ok, chatroom_pid} = DynamicSupervisor.start_child(ChatroomEntity.Supervisor, {ChatroomEntity, chatroom_id})
+        GenServer.call(chatroom_pid, {:user_enter, pid})
+        {:reply, :ok, Map.put(state, chatroom_id, chatroom_pid)}
     end
   end
 
   def handle_call({:user_leave, chatroom_id, pid}, _from, state) do
     case Map.has_key?(state, chatroom_id) do
-      true -> {:reply, :ok, Map.put(state, chatroom_id, state[chatroom_id] -- [pid])}
+      true -> {:reply, GenServer.call(state[chatroom_id], {:user_leave, pid}), state}
       false -> {:reply, :error, state}
     end
   end
 
-  def handle_call({:user_leave, pid}, _from, state) do
-    {:reply, :ok, get_map(Enum.map(state, fn({k, v}) -> {k, v -- pid} end), %{})}
-  end
-
   def handle_call({:broadcast_message, chatroom_id, message}, _from, state) do
-    for pid <- state[chatroom_id] do
-      send(pid, {:text, Jason.encode!(message)})
+    case Map.has_key?(state, chatroom_id) do
+      true -> {:reply, GenServer.call(state[chatroom_id], {:broadcast_message, message}), state}
+      false -> {:reply, :error, state}
     end
-    {:reply, :ok, state}
   end
-
-  defp get_map([{k, v}| tail], map), do: get_map(tail, Map.put(map, k, v))
-  defp get_map([], map), do: map
 
   ### Client API
   @spec start_link(any) :: :ignore | {:error, any} | {:ok, pid}
@@ -38,6 +34,5 @@ defmodule ClientManager do
   end
   def user_enter(chatroom_id, pid), do: GenServer.call(__MODULE__, {:user_enter, chatroom_id, pid})
   def user_leave(chatroom_id, pid), do: GenServer.call(__MODULE__, {:user_leave, chatroom_id, pid})
-  def user_leave(pid), do: GenServer.call(__MODULE__, {:user_leave, pid})
   def broadcast_message(chatroom_id, message), do: GenServer.call(__MODULE__, {:broadcast_message, chatroom_id, message})
 end

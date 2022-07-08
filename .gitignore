@@ -24,3 +24,6 @@ im_homework-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Frontend files
+/public/

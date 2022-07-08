@@ -42,6 +42,11 @@ defmodule DbManager do
     {:reply, result != nil && result["status"] == "CREATED", state}
   end
 
+  def handle_call({:chatroom_info, chatroom_id}, _from, state) do
+    result = Mongo.find_one(state.db, "chatrooms", %{_id: chatroom_id})
+    {:reply, result, state}
+  end
+
   def handle_call({:del_chatroom, chatroom_id}, _from, state) do
     case Mongo.update_one(state.db, "chatrooms", %{_id: chatroom_id}, %{"$set": %{status: "DELETED", delete_time: DateTime.to_unix(DateTime.utc_now)}}) do
       {:ok, %{modified_count: 1}} -> {:reply, :ok, state}
@@ -111,4 +116,6 @@ defmodule DbManager do
   def get_my_chatrooms(username), do: GenServer.call(__MODULE__, {:get_my_chatrooms, username})
 
   def chatroom_exists?(chatroom_id), do: GenServer.call(__MODULE__, {:chatroom_exists, chatroom_id})
+
+  def get_chatroom_info(chatroom_id), do: GenServer.call(__MODULE__, {:chatroom_info, chatroom_id})
 end

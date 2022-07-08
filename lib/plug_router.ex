@@ -108,10 +108,18 @@ defmodule PlugRouter do
   end
 
   match _ do
-    send_resp(conn, 404, Jason.encode!(%{
-      code: 404,
-      msg: "API not found."
-    }))
+    IO.inspect(conn.request_path)
+    file = if conn.request_path == "/" do "/index.html" else conn.request_path end
+    case File.read(Path.join("./public", file)) do
+      {:ok, data} ->
+        conn
+          |> Map.put(:resp_headers, conn.resp_headers ++ [{"content-type", MIME.from_path(file)}])
+          |> send_resp(200, data)
+      _ -> send_resp(conn, 404, Jason.encode!(%{
+        code: 404,
+        msg: "API not found."
+      }))
+    end
   end
 
   defp handle_errors(conn, %{kind: _kind, reason: _reason, stack: _stack}) do
