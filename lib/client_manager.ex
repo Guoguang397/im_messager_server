@@ -20,9 +20,13 @@ defmodule ClientManager do
     end
   end
 
-  def handle_call({:broadcast_message, chatroom_id, message}, _from, state) do
+  def handle_call({:broadcast_message, chatroom_id, message, self_only}, _from, state) do
     case Map.has_key?(state, chatroom_id) do
-      true -> {:reply, GenServer.call(state[chatroom_id], {:broadcast_message, message}), state}
+      true ->
+        if !self_only do
+          NodeManager.notify_nodes({:message, chatroom_id, message})
+        end
+        {:reply, GenServer.call(state[chatroom_id], {:broadcast_message, message}), state}
       false -> {:reply, :error, state}
     end
   end
@@ -34,5 +38,5 @@ defmodule ClientManager do
   end
   def user_enter(chatroom_id, pid), do: GenServer.call(__MODULE__, {:user_enter, chatroom_id, pid})
   def user_leave(chatroom_id, pid), do: GenServer.call(__MODULE__, {:user_leave, chatroom_id, pid})
-  def broadcast_message(chatroom_id, message), do: GenServer.call(__MODULE__, {:broadcast_message, chatroom_id, message})
+  def broadcast_message(chatroom_id, message, self_only \\ false), do: GenServer.call(__MODULE__, {:broadcast_message, chatroom_id, message, self_only})
 end

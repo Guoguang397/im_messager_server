@@ -12,7 +12,7 @@ defmodule ImHomework.Application do
       ClientManager,
       {Plug.Cowboy, scheme: :http, plug: PlugRouter, options: [
         dispatch: dispatch(),
-        port: 8080
+        port: Application.get_env(:im_homework, :ports)[Node.self]
       ]}
       # Starts a worker by calling: ImHomework.Worker.start_link(arg)
       # {ImHomework.Worker, arg}
