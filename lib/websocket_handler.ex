@@ -1,6 +1,9 @@
 defmodule WebsocketHandler do
-
-  alias ClientManager.PeerInfo
+  defmodule PeerInfo do
+    defstruct username: nil,
+              chatroom_id: nil,
+              pid: nil
+  end
 
   def get_peer_info(_, map \\ %PeerInfo{})
   def get_peer_info([[k, v]| tail], map), do: get_peer_info(tail, Map.put(map, String.to_atom(k), v))
@@ -68,10 +71,5 @@ defmodule WebsocketHandler do
       false -> ClientManager.user_leave(state.pid)
     end
     :ok
-  end
-
-  ### APIs
-  def send_by_pid(pid, msg) do
-    send(pid, {:text, msg})
   end
 end

@@ -1,9 +1,4 @@
 defmodule ClientManager do
-  defmodule PeerInfo do
-    defstruct username: nil,
-              chatroom_id: nil,
-              pid: nil
-  end
   use GenServer
 
   def init(state \\ %{}), do: {:ok, state}
@@ -28,7 +23,7 @@ defmodule ClientManager do
 
   def handle_call({:broadcast_message, chatroom_id, message}, _from, state) do
     for pid <- state[chatroom_id] do
-      WebsocketHandler.send_by_pid(pid, Jason.encode!(message))
+      send(pid, {:text, Jason.encode!(message)})
     end
     {:reply, :ok, state}
   end
